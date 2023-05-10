@@ -76,8 +76,8 @@ int uringload(const char* path, uint8_t** buff, uring_args_t args, void (*hook)(
         uring_thread_t *ut = &_ut;
         s32 ret = 0;
 
-        ur_open_file( &ut->fs, path, args.block_size);
-        ur_print_filestat( &ut->fs );
+        ur_open_file( &ut->file_stats, path, args.block_size);
+        ur_print_filestat( &ut->file_stats );
 
         ret = io_uring_queue_init(
                 args.sq_entries,
@@ -87,7 +87,7 @@ int uringload(const char* path, uint8_t** buff, uring_args_t args, void (*hook)(
         TEST_QUEUE_INIT(ret);
 
         ut->setup_args = args;
-        *buff = (u8*)malloc( ut->fs.file_size );
+        *buff = (u8*)malloc( ut->file_stats.file_size );
         ut->buff = (*buff);
 
         // printf("Len: %lu\n", ut->fs.
