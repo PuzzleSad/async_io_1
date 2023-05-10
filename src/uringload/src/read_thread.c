@@ -3,15 +3,16 @@
 #include "types.h"
 #include <liburing.h>
 
+static int wait_for_cqe( uring_thread_t* ut, struct io_uring_cqe** cqe );
+
 void* ut_read_thread( void* args ){
         uring_thread_t* ut = (uring_thread_t*)args;
-        s32 ret = 0;
 
-        while(1){
+        //Since we know how many blocks will be read
+        for( u64 i = 0; i < ut->file_stats.block_count; i++ ){
                 struct io_uring_cqe* cqe;
-                ret = io_uring_wait_cqe( &ut->ring, &cqe ); 
-                if( ret < 0 ){
-                        printf("io_uring_wait error: %i\n", ret );
+
+                if( wait_for_cqe( ut, &cqe ) < 0 ){
                         goto UNEXPECTED_QUIT;
                 }
 
@@ -26,7 +27,7 @@ void* ut_read_thread( void* args ){
 
         }
 
-        printf("Read_thread success\n");
+        printf("\e[32mread_thread success\e[0m\n");
 
         return NULL;
 
@@ -35,4 +36,17 @@ void* ut_read_thread( void* args ){
 
 
         return NULL;
+}
+
+static int wait_for_cqe( uring_thread_t* ut, struct io_uring_cqe** cqe ){
+        // struct io_uring_cqe* cqe;
+        s32 ret = 0;
+
+        ret = io_uring_wait_cqe( &ut->ring, cqe );
+        if( ret < 0 ){
+                printf("io_uring_wait error: %i\n", ret );
+                *cqe = NULL;
+        }
+
+        return ret;
 }
